@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Smart Cities</title>
+        <!-- SCRIPTS -->
+        <meta name="viewport" charset="UTF-8" content="initial-scale=1.0, width=device-width" />
+        <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+        <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+        <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+        <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css"/> 
+    </head>
+    <body>
+        <div id="map" style="width: 100vw; height: 100vh; background: #39B6B3;" ></div> 
+        <script>
+            var platform = new H.service.Platform({
+                apikey: "FRCuUWeHTAF_lUPSWsKRUC_P-C3BEKVFi8MlvbgDqOs"
+            });
+
+            // Obtain the default map types from the platform object:
+
+            var defaultLayers = platform.createDefaultLayers();
+            var myPos = {lat: 52.512042, lng: 13.321145};
+
+            // Instantiate (and display) a map object:
+
+            var map = new H.Map(
+                document.getElementById('map'),
+                defaultLayers.vector.normal.map,
+                {
+                    zoom: 11,
+                    center: myPos
+                });
+
+            var ui = H.ui.UI.createDefault(map, defaultLayers);
+
+            var mapEvents = new H.mapevents.MapEvents(map);
+
+            var behavior = new H.mapevents.Behavior(mapEvents);
+            var service = platform.getPlatformDataService();
+
+            function displayEV(){
+                var service = platform.getPlatformDataService();
+
+                style = new H.map.SpatialStyle();
+// create tile provider and layer that displays postcode boundaries
+                var boundariesProvider = new H.service.extension.platformData.TileProvider(service,
+                {
+                    layer: 'PSTLCB_GEN', level: 12
+                }, {
+                    resultType: H.service.extension.platformData.TileProvider.ResultType.POLYLINE,
+                    styleCallback: function(data) {return style}
+                });
+                var boundaries = new H.map.layer.TileLayer(boundariesProvider);
+                map.addLayer(boundaries);
+                var centroidsProvider = new H.service.extension.platformData.TileProvider(service,
+                {
+                    layer: 'PSTLCB_MP', level: 12
+                }, {
+                resultType: H.service.extension.platformData.TileProvider.ResultType.MARKER
+                });
+                var centroids = new H.map.layer.MarkerTileLayer(centroidsProvider);
+                map.addLayer(centroids);
+
+// add events listener, that outputs data provided by the Platform Data Extenstion and
+// associated with the H.map.Marker
+                centroidsProvider.addEventListener('tap', function(ev) {
+                    var markerData = ev.target.getData();
+                console.log(markerData.getCell('POSTAL_CODE'), markerData.getCell('ISO_COUNTRY_CODE'))
+                });
+            }
+
+            function addMarker(newpos){
+                evMarker = new H.map.Marker(newPos);
+                map.addObject(evMarker)
+            }
+
+            displayEV();
+            function drawCircle(){
+                var circle = new H.map.Circle(myPos,5000);
+                map.addObject(circle);
+            }
+
+            drawCircle();
+
+        </script>
+    </body>
+</html>
